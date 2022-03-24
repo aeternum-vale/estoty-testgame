@@ -1,89 +1,35 @@
 using System;
-using Gamelogic.Extensions;
-using Lean.Touch;
+using System.Linq;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+	public const int CarLayer = 6;
+	public const int RoadLayer = 7;
+	public const int ExitLayer = 8;
 
-	[SerializeField] private float _minDotToSlideTheCar;
+	[SerializeField] private Transform _carsContainer;
 
-	private Camera _mainCamera;
-	private Transform _mainCameraTransform;
+	private Car[] _cars;
 
-
-	private Vector3 _debugSwipeStart;
-	private Vector3 _debugSwipeEnd;
-	private Vector3 _debugCarDirStart;
-	private Vector3 _debugCarDirEnd;
+	private int _reachedExitCarCount = 0;
 
 	private void Awake()
 	{
-		LeanTouch.OnFingerUp += OnFingerUp;
+		_cars = _carsContainer.GetComponentsInChildren<Car>();
+		_cars.ToList().ForEach(c => c.ReachedExit += OnCarReachedExit);
 	}
 
-	private void Start()
+	private void OnCarReachedExit(object sender, EventArgs args)
 	{
-		_mainCamera = Camera.main;
-		_mainCameraTransform = _mainCamera.transform;
+		_reachedExitCarCount++;
+
+		if (_reachedExitCarCount == _cars.Length)
+			FinishLevel();
 	}
 
-	private void OnFingerUp(LeanFinger finger)
+	private void FinishLevel()
 	{
-		if (!finger.Swipe) return;
-
-		int carLayer = 6;
-		int layerMask = 1 << carLayer;
-
-		Vector3 origin = _mainCameraTransform.position;
-		Vector3 startScreenPositionWithZ = ((Vector3)finger.StartScreenPosition).WithZ(5f);
-		Vector3 lastScreenPositionWithZ = ((Vector3)finger.LastScreenPosition).WithZ(5f);
-		Vector3 direction = (_mainCamera.ScreenToWorldPoint(startScreenPositionWithZ) - _mainCameraTransform.position).normalized;
-
-		_debugSwipeStart = startScreenPositionWithZ;
-		_debugSwipeEnd = lastScreenPositionWithZ;
-
-		if (Physics.Raycast(origin, direction, out RaycastHit hit, 100f, layerMask))
-		{
-			Debug.Log($"<color=lightblue>{GetType().Name}:</color> hit!");
-
-			_debugCarDirStart = _mainCamera.WorldToScreenPoint(hit.transform.position);
-			_debugCarDirEnd = _mainCamera.WorldToScreenPoint(hit.transform.position + hit.transform.forward * 5f);
-
-			Transform carTransform = hit.transform;
-
-			Vector2 swipeScreenDirection = (finger.LastScreenPosition - finger.StartScreenPosition).normalized;
-			Vector2 carScreenDirection =
-				(_mainCamera.WorldToScreenPoint(carTransform.position + carTransform.forward * 5f) -
-				_mainCamera.WorldToScreenPoint(carTransform.position)).normalized;
-
-			float swipeAndCarScreenDirectionDot = Vector2.Dot(swipeScreenDirection, carScreenDirection);
-
-			if (Math.Abs(swipeAndCarScreenDirectionDot) >= _minDotToSlideTheCar)
-			{
-				var car = carTransform.GetComponent<Car>();
-				if (swipeAndCarScreenDirectionDot > 0)
-					car.MoveForward();
-				else
-					car.MoveBackward();
-			}
-		}
+		Debug.Log($"<color=lightblue>{GetType().Name}:</color> Level finished");
 	}
-
-	private void OnDrawGizmos()
-	{
-		if (!Application.isPlaying) return;
-
-		Gizmos.color = Color.red;
-		Gizmos.DrawLine(
-			_mainCamera.ScreenToWorldPoint(_debugSwipeStart),
-			_mainCamera.ScreenToWorldPoint(_debugSwipeEnd));
-
-		Gizmos.color = Color.blue;
-		Gizmos.DrawLine(
-			_mainCamera.ScreenToWorldPoint(_debugCarDirStart),
-			_mainCamera.ScreenToWorldPoint(_debugCarDirEnd));
-	}
-
-
 }
