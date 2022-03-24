@@ -160,9 +160,11 @@ public class Car : MonoBehaviour
 			case GameManager.CarLayer:
 				var otherCar = other.gameObject.GetComponent<Car>();
 
+				bool isForward = _state == ECarState.MovingForward;
+				int dir = isForward ? -1 : 1;
 
 				if (otherCar.State == ECarState.StandingStill)
-					otherCar.Punch(transform.forward);
+					otherCar.Punch(transform.forward * dir);
 
 				if (otherCar.State == ECarState.Leaving) break;
 
