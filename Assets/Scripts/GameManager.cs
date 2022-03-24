@@ -1,4 +1,5 @@
 using System;
+using Gamelogic.Extensions;
 using Lean.Touch;
 using UnityEngine;
 
@@ -35,14 +36,12 @@ public class GameManager : MonoBehaviour
 		int layerMask = 1 << carLayer;
 
 		Vector3 origin = _mainCameraTransform.position;
-		Vector3 startScreenPositionWithZ = new Vector3(finger.StartScreenPosition.x, finger.StartScreenPosition.y, 5f);
-		Vector3 lastScreenPositionWithZ = new Vector3(finger.LastScreenPosition.x, finger.LastScreenPosition.y, 5f);
+		Vector3 startScreenPositionWithZ = ((Vector3)finger.StartScreenPosition).WithZ(5f);
+		Vector3 lastScreenPositionWithZ = ((Vector3)finger.LastScreenPosition).WithZ(5f);
 		Vector3 direction = (_mainCamera.ScreenToWorldPoint(startScreenPositionWithZ) - _mainCameraTransform.position).normalized;
 
 		_debugSwipeStart = startScreenPositionWithZ;
 		_debugSwipeEnd = lastScreenPositionWithZ;
-
-
 
 		if (Physics.Raycast(origin, direction, out RaycastHit hit, 100f, layerMask))
 		{
@@ -51,17 +50,23 @@ public class GameManager : MonoBehaviour
 			_debugCarDirStart = _mainCamera.WorldToScreenPoint(hit.transform.position);
 			_debugCarDirEnd = _mainCamera.WorldToScreenPoint(hit.transform.position + hit.transform.forward * 5f);
 
-			Transform car = hit.transform;
+			Transform carTransform = hit.transform;
 
 			Vector2 swipeScreenDirection = (finger.LastScreenPosition - finger.StartScreenPosition).normalized;
 			Vector2 carScreenDirection =
-				(_mainCamera.WorldToScreenPoint(car.position + car.forward * 5f) -
-				_mainCamera.WorldToScreenPoint(car.position)).normalized;
+				(_mainCamera.WorldToScreenPoint(carTransform.position + carTransform.forward * 5f) -
+				_mainCamera.WorldToScreenPoint(carTransform.position)).normalized;
 
 			float swipeAndCarScreenDirectionDot = Vector2.Dot(swipeScreenDirection, carScreenDirection);
 
 			if (Math.Abs(swipeAndCarScreenDirectionDot) >= _minDotToSlideTheCar)
-				Debug.Log($"<color=lightblue>{GetType().Name}:</color> slide! ({swipeAndCarScreenDirectionDot})");
+			{
+				var car = carTransform.GetComponent<Car>();
+				if (swipeAndCarScreenDirectionDot > 0)
+					car.MoveForward();
+				else
+					car.MoveBackward();
+			}
 		}
 	}
 
