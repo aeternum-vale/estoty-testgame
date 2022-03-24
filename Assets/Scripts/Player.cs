@@ -5,10 +5,8 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-
 	[SerializeField] private float _minDotToSlideTheCar;
-
-	private Camera _mainCamera;
+	[SerializeField] private Camera _mainCamera;
 	private Transform _mainCameraTransform;
 
 
@@ -20,6 +18,11 @@ public class Player : MonoBehaviour
 	private void Awake()
 	{
 		LeanTouch.OnFingerUp += OnFingerUp;
+	}
+
+	private void OnDestroy()
+	{
+		LeanTouch.OnFingerUp -= OnFingerUp;
 	}
 
 	private void Start()
