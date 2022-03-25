@@ -31,6 +31,7 @@ public class GameManager : MonoBehaviour
 	[SerializeField] private Button _levelCompletedScreenHomeButton;
 	[SerializeField] private Button _levelCompletedScreenRestartButton;
 
+
 	private Car[] _cars;
 	private int _reachedExitCarCount = 0;
 
@@ -45,6 +46,14 @@ public class GameManager : MonoBehaviour
 		_levelCompletedScreenRestartButton.onClick.AddListener(OnRestartButtonClicked);
 	}
 
+	private void OnDestroy()
+	{
+		_homeButton.onClick.RemoveListener(OnHomeButtonClicked);
+		_restartButton.onClick.RemoveListener(OnRestartButtonClicked);
+		_levelCompletedScreenHomeButton.onClick.RemoveListener(OnHomeButtonClicked);
+		_levelCompletedScreenRestartButton.onClick.RemoveListener(OnRestartButtonClicked);
+	}
+
 	private void OnCarReachedExit(object sender, EventArgs args)
 	{
 		_reachedExitCarCount++;
@@ -56,25 +65,21 @@ public class GameManager : MonoBehaviour
 	[Button]
 	private void FinishLevel()
 	{
-		Debug.Log($"<color=lightblue>{GetType().Name}:</color> Level finished");
-
 		_gameUIScreen.DOFade(0f, _screenFadeDuration)
 			.OnComplete(() => _gameUIScreen.gameObject.SetActive(false));
 
 		_levelCompletedScreen.gameObject.SetActive(true);
 		_levelCompletedScreen.DOFade(1f, _screenFadeDuration);
 		_levelCompletedScreen.transform.DOScale(Vector3.one, _screenFadeDuration).SetEase(Ease.OutBack);
-
 	}
 
 	private void OnHomeButtonClicked()
 	{
-		SceneManager.LoadScene(GameManager.MainMenuSceneIndex);
+		SceneManager.LoadScene(MainMenuSceneIndex);
 	}
 
 	private void OnRestartButtonClicked()
 	{
-		SceneManager.LoadScene(GameManager.GameSceneIndex, LoadSceneMode.Single);
-
+		SceneManager.LoadScene(GameSceneIndex, LoadSceneMode.Single);
 	}
 }

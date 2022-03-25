@@ -7,13 +7,9 @@ public class Player : MonoBehaviour
 {
 	[SerializeField] private float _minDotToSlideTheCar;
 	[SerializeField] private Camera _mainCamera;
+
 	private Transform _mainCameraTransform;
 
-
-	private Vector3 _debugSwipeStart;
-	private Vector3 _debugSwipeEnd;
-	private Vector3 _debugCarDirStart;
-	private Vector3 _debugCarDirEnd;
 
 	private void Awake()
 	{
@@ -35,24 +31,25 @@ public class Player : MonoBehaviour
 	{
 		if (!finger.Swipe) return;
 
+		TryMoveTheCar(finger.StartScreenPosition, finger.LastScreenPosition);
+	}
+
+	private void TryMoveTheCar(Vector3 startScreenPosition, Vector3 lastScreenPosition)
+	{
 		int layerMask = 1 << GameManager.CarLayer;
 
 		Vector3 origin = _mainCameraTransform.position;
-		Vector3 startScreenPositionWithZ = ((Vector3)finger.StartScreenPosition).WithZ(5f);
-		Vector3 lastScreenPositionWithZ = ((Vector3)finger.LastScreenPosition).WithZ(5f);
-		Vector3 direction = (_mainCamera.ScreenToWorldPoint(startScreenPositionWithZ) - _mainCameraTransform.position).normalized;
-
-		_debugSwipeStart = startScreenPositionWithZ;
-		_debugSwipeEnd = lastScreenPositionWithZ;
+		Vector3 startScreenPositionWithZ = startScreenPosition.WithZ(5f);
+		Vector3 lastScreenPositionWithZ = lastScreenPosition.WithZ(5f);
+		Vector3 direction =
+			(_mainCamera.ScreenToWorldPoint(startScreenPositionWithZ) - _mainCameraTransform.position)
+			.normalized;
 
 		if (Physics.Raycast(origin, direction, out RaycastHit hit, 100f, layerMask))
 		{
-			_debugCarDirStart = _mainCamera.WorldToScreenPoint(hit.transform.position);
-			_debugCarDirEnd = _mainCamera.WorldToScreenPoint(hit.transform.position + hit.transform.forward * 5f);
-
 			Transform carTransform = hit.transform;
 
-			Vector2 swipeScreenDirection = (finger.LastScreenPosition - finger.StartScreenPosition).normalized;
+			Vector2 swipeScreenDirection = (lastScreenPosition - startScreenPosition).normalized;
 			Vector2 carScreenDirection =
 				(_mainCamera.WorldToScreenPoint(carTransform.position + carTransform.forward * 5f) -
 				_mainCamera.WorldToScreenPoint(carTransform.position)).normalized;
@@ -69,21 +66,5 @@ public class Player : MonoBehaviour
 			}
 		}
 	}
-
-	private void OnDrawGizmos()
-	{
-		if (!Application.isPlaying) return;
-
-		Gizmos.color = Color.red;
-		Gizmos.DrawLine(
-			_mainCamera.ScreenToWorldPoint(_debugSwipeStart),
-			_mainCamera.ScreenToWorldPoint(_debugSwipeEnd));
-
-		Gizmos.color = Color.blue;
-		Gizmos.DrawLine(
-			_mainCamera.ScreenToWorldPoint(_debugCarDirStart),
-			_mainCamera.ScreenToWorldPoint(_debugCarDirEnd));
-	}
-
 
 }

@@ -11,8 +11,13 @@ public class MainMenu : MonoBehaviour
 		_playButton.onClick.AddListener(OnPlayButtonClick);
 	}
 
+	private void OnDestroy()
+	{
+		_playButton.onClick.RemoveListener(OnPlayButtonClick);
+	}
+
 	private void OnPlayButtonClick()
 	{
-		SceneManager.LoadScene(GameManager.GameSceneIndex);	
+		SceneManager.LoadScene(GameManager.GameSceneIndex);
 	}
 }
