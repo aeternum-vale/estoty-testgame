@@ -20,41 +20,54 @@ public class Car : PunchableObject
 
 
 	private ECarState _state = ECarState.StandingStill;
-	private ECarState State => _state;
-
 	private BoxCollider _currentRoad;
 
 	public event EventHandler ReachedExit;
 
 	private bool IsMovingForward => _state == ECarState.MovingForward;
-	private bool IsMoving => (_state == ECarState.MovingForward || _state == ECarState.MovingBackward);
+	private ECarState State => _state;
 
 
-	[Button]
-	public void MoveForward()
+	private void Update()
 	{
-		Debug.Log($"<color=lightblue>{GetType().Name}:</color> try move forward");
-		if (CanMove(true))
+		if (_state == ECarState.StandingStill) return;
+
+		if (_state == ECarState.Leaving)
 		{
-			Debug.Log($"<color=lightblue>{GetType().Name}:</color> success move forward");
-			SetState(ECarState.MovingForward);
+			LeavingUpdate();
+			return;
 		}
+
+		MovingUpdate();
 	}
 
-	[Button]
-	public void MoveBackward()
+	private void MovingUpdate()
 	{
-		Debug.Log($"<color=lightblue>{GetType().Name}:</color> try move backward");
+		int dir = IsMovingForward ? 1 : -1;
 
-		if (CanMove(false))
-		{
-			Debug.Log($"<color=lightblue>{GetType().Name}:</color> success move backward");
-
-			SetState(ECarState.MovingBackward);
-		}
+		transform.position += transform.forward * dir * _speed * Time.deltaTime;
 	}
 
-	private bool CanMove(bool isForward)
+	private void LeavingUpdate()
+	{
+		Vector3 target = _currentRoad.transform.position +
+			_currentRoad.transform.forward *
+			(_currentRoad.size.z / 2) *
+			_currentRoad.transform.localScale.z;
+
+
+		Vector3 dirToTarget = (target - transform.position).normalized;
+		dirToTarget = new Vector3(dirToTarget.x, 0, dirToTarget.z);
+
+		transform.forward = Vector3.Slerp(transform.forward, dirToTarget, _rotateSpeed * Time.deltaTime);
+
+		transform.position += transform.forward * _speed * Time.deltaTime;
+	}
+
+	[Button] public void MoveForward() => TryMove(true);
+	[Button] public void MoveBackward() => TryMove(false);
+
+	private void TryMove(bool isForward)
 	{
 		int layerMask = (1 << GameManager.CarLayer) | (1 << GameManager.ObstacleLayer);
 
@@ -81,10 +94,13 @@ public class Car : PunchableObject
 		{
 			var po = hit.transform.gameObject.GetComponent<PunchableObject>();
 			po.Punch(transform.forward * (isForward ? -1 : 1));
-			return false;
+			return;
 		}
 
-		return true;
+		if (isForward)
+			SetState(ECarState.MovingForward);
+		else
+			SetState(ECarState.MovingBackward);
 	}
 
 	private void SetState(ECarState newState)
@@ -105,81 +121,49 @@ public class Car : PunchableObject
 				break;
 			case ECarState.Leaving: return;
 		}
-
-
 		_state = newState;
 	}
 
-	private void Update()
+	private void OnTriggerEnter(Collider otherCollider)
 	{
-		switch (_state)
-		{
-			case ECarState.StandingStill: StandingStillUpdate(); return;
-			case ECarState.MovingForward: MovingUpdate(); return;
-			case ECarState.MovingBackward: MovingUpdate(); return;
-			case ECarState.Leaving: LeavingUpdate(); return;
-		}
-	}
-
-	private void StandingStillUpdate() { }
-
-	private void MovingUpdate()
-	{
-		int dir = IsMovingForward ? 1 : -1;
-
-		transform.position += transform.forward * dir * _speed * Time.deltaTime;
-	}
-
-	private void LeavingUpdate()
-	{
-		Vector3 target = _currentRoad.transform.position +
-			_currentRoad.transform.forward *
-			(_currentRoad.size.z / 2) *
-			_currentRoad.transform.localScale.z;
-
-
-		Vector3 dirToTarget = (target - transform.position).normalized;
-		dirToTarget = new Vector3(dirToTarget.x, 0, dirToTarget.z);
-
-		transform.forward = Vector3.Slerp(transform.forward, dirToTarget, _rotateSpeed * Time.deltaTime);
-
-		transform.position += transform.forward * _speed * Time.deltaTime;
-	}
-
-
-	private void OnTriggerEnter(Collider other)
-	{
-		Debug.Log($"<color=lightblue>{GetType().Name}:</color> OnTriggerEnter {other.gameObject.name}");
-
 		if (_state == ECarState.StandingStill) return;
 
 		if (_state == ECarState.Leaving)
 		{
-			switch (other.gameObject.layer)
-			{
-				case GameManager.RoadLayer:
-					_currentRoad = (BoxCollider)other;
-					break;
-				case GameManager.ExitLayer:
-					ReachedExit?.Invoke(this, EventArgs.Empty);
-					gameObject.SetActive(false);
-
-					break;
-			}
+			HandleTriggerEnterWhileLeaving(otherCollider);
 			return;
 		}
 
-		switch (other.gameObject.layer)
+		HandleTriggerEnterWhileMoving(otherCollider);
+	}
+
+	private void HandleTriggerEnterWhileLeaving(Collider otherCollider)
+	{
+		switch (otherCollider.gameObject.layer)
 		{
 			case GameManager.RoadLayer:
-				if (_state == ECarState.MovingForward)
+				_currentRoad = (BoxCollider)otherCollider;
+				break;
+			case GameManager.ExitLayer:
+				ReachedExit?.Invoke(this, EventArgs.Empty);
+				gameObject.SetActive(false);
+				break;
+		}
+	}
+
+	private void HandleTriggerEnterWhileMoving(Collider otherCollider)
+	{
+		switch (otherCollider.gameObject.layer)
+		{
+			case GameManager.RoadLayer:
+				if (IsMovingForward)
 				{
-					_currentRoad = (BoxCollider)other;
+					_currentRoad = (BoxCollider)otherCollider;
 					SetState(ECarState.Leaving);
 				}
 				break;
 			case GameManager.CarLayer:
-				var otherCar = other.gameObject.GetComponent<Car>();
+				var otherCar = otherCollider.gameObject.GetComponent<Car>();
 
 				if (otherCar.State == ECarState.StandingStill)
 					otherCar.Punch(transform.forward * (IsMovingForward ? -1 : 1));
@@ -190,12 +174,11 @@ public class Car : PunchableObject
 				break;
 
 			case GameManager.ObstacleLayer:
-				var obstacle = other.gameObject.GetComponent<PunchableObject>();
+				var obstacle = otherCollider.gameObject.GetComponent<PunchableObject>();
 				obstacle.Punch(transform.forward * (IsMovingForward ? -1 : 1));
 				Kick();
 				break;
 		}
-
 	}
 
 	private void OnTriggerExit(Collider other)
@@ -229,23 +212,14 @@ public class Car : PunchableObject
 		_kickAudioSource.Play();
 	}
 
-
-	private void OnCollisionEnter(Collision other)
-	{
-		Debug.Log($"<color=lightblue>{GetType().Name}:</color> OnCollisionEnter {other.gameObject.name}");
-	}
-	private void OnCollisionExit(Collision other)
-	{
-		Debug.Log($"<color=lightblue>{GetType().Name}:</color> OnCollisionExit {other.gameObject.name}");
-
-	}
-
+#if UNITY_EDITOR
 	private void OnDrawGizmos()
 	{
 		Gizmos.color = Color.blue;
 		Gizmos.DrawSphere(transform.position + transform.forward * (_carLength / 2f), 0.05f);
 		Gizmos.color = Color.cyan;
-		Gizmos.DrawSphere(transform.position + transform.forward * (_carLength / 2f + _carSafeDistance), 0.05f);
+		Gizmos.DrawSphere(transform.position + transform.forward *
+			(_carLength / 2f + _carSafeDistance), 0.05f);
 
 		Gizmos.DrawSphere(transform.position + transform.right * (_carWidth / 2), 0.05f);
 		Gizmos.DrawSphere(transform.position - transform.right * (_carWidth / 2), 0.05f);
@@ -254,9 +228,10 @@ public class Car : PunchableObject
 		if (_currentRoad == null) return;
 
 		Gizmos.color = Color.red;
-		Gizmos.DrawSphere(_currentRoad.transform.position + _currentRoad.transform.forward * (_currentRoad.size.z / 2) * _currentRoad.transform.localScale.z, 0.05f);
-
-
+		Gizmos.DrawSphere(_currentRoad.transform.position + _currentRoad.transform.forward *
+			(_currentRoad.size.z / 2) * _currentRoad.transform.localScale.z, 0.05f);
 	}
+
+#endif
 
 }
