@@ -86,7 +86,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 320286081759367274, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: _carLength
-      value: 2.71
+      value: 3.06
       objectReference: {fileID: 0}
     - target: {fileID: 320286081759367277, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: m_RootOrder
@@ -133,8 +133,12 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 320286081759367278, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
+      propertyPath: m_Size.x
+      value: 0.98
+      objectReference: {fileID: 0}
+    - target: {fileID: 320286081759367278, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: m_Size.z
-      value: 1.2
+      value: 1.29
       objectReference: {fileID: 0}
     - target: {fileID: 3189668754977397176, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: m_LocalPosition.z

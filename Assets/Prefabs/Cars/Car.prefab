@@ -48,7 +48,7 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.79, y: 1.05, z: 1.05}
+  m_Size: {x: 0.87, y: 1.05, z: 1.11}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &320286081759367275
 Rigidbody:
@@ -80,8 +80,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _punchForce: 5
   _speed: 10
-  _rotateSpeed: 8
-  _carLength: 2.35
+  _rotateSpeed: 7
+  _carLength: 2.59
   _carWidth: 0.72
   _carSafeDistance: 0.2
   _frontKickParticles: {fileID: 6111241068459017914}

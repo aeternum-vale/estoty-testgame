@@ -86,7 +86,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 320286081759367274, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: _carLength
-      value: 2.38
+      value: 2.57
       objectReference: {fileID: 0}
     - target: {fileID: 320286081759367274, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: _carSafeDistance
@@ -135,6 +135,10 @@ PrefabInstance:
     - target: {fileID: 320286081759367277, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 320286081759367278, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
+      propertyPath: m_Size.x
+      value: 1.11
       objectReference: {fileID: 0}
     - target: {fileID: 6407211289620982571, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: m_IsActive
