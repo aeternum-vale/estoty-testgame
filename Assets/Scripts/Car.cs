@@ -54,21 +54,35 @@ public class Car : PunchableObject
 		}
 	}
 
-	private bool CanMove(bool forward)
+	private bool CanMove(bool isForward)
 	{
 		int layerMask = (1 << GameManager.CarLayer) | (1 << GameManager.ObstacleLayer);
 
 		RaycastHit hit;
-		if (Physics.Raycast(transform.position, (forward ? 1 : -1) * transform.forward, out hit, _carLength / 2f + _carSafeDistance, layerMask))
-			return false;
+		bool wasHit = false;
 
-		if (Physics.Raycast(transform.position + transform.right * (_carWidth / 2),
-			(forward ? 1 : -1) * transform.forward, out hit, _carLength / 2f + _carSafeDistance, layerMask))
-			return false;
+		if (Physics.Raycast(transform.position, (isForward ? 1 : -1) * transform.forward,
+			out hit, _carLength / 2f + _carSafeDistance, layerMask))
+			wasHit = true;
 
-		if (Physics.Raycast(transform.position - transform.right * (_carWidth / 2),
-			(forward ? 1 : -1) * transform.forward, out hit, _carLength / 2f + _carSafeDistance, layerMask))
+		if (!wasHit)
+			if (Physics.Raycast(transform.position + transform.right * (_carWidth / 2),
+				(isForward ? 1 : -1) * transform.forward,
+				out hit, _carLength / 2f + _carSafeDistance, layerMask))
+				wasHit = true;
+
+		if (!wasHit)
+			if (Physics.Raycast(transform.position - transform.right * (_carWidth / 2),
+				(isForward ? 1 : -1) * transform.forward,
+				out hit, _carLength / 2f + _carSafeDistance, layerMask))
+				wasHit = true;
+
+		if (wasHit)
+		{
+			var po = hit.transform.gameObject.GetComponent<PunchableObject>();
+			po.Punch(transform.forward * (isForward ? -1 : 1));
 			return false;
+		}
 
 		return true;
 	}
@@ -200,12 +214,12 @@ public class Car : PunchableObject
 
 	private void Kick()
 	{
+		PlayKickSound();
+
 		if (IsMovingForward)
 			_frontKickParticles.Play();
 		else
 			_backKickParticles.Play();
-
-		PlayKickSound();
 
 		SetState(ECarState.StandingStill);
 	}
@@ -229,18 +243,18 @@ public class Car : PunchableObject
 	private void OnDrawGizmos()
 	{
 		Gizmos.color = Color.blue;
-		Gizmos.DrawSphere(transform.position + transform.forward * (_carLength / 2f), 0.1f);
+		Gizmos.DrawSphere(transform.position + transform.forward * (_carLength / 2f), 0.05f);
 		Gizmos.color = Color.cyan;
-		Gizmos.DrawSphere(transform.position + transform.forward * (_carLength / 2f + _carSafeDistance), 0.1f);
+		Gizmos.DrawSphere(transform.position + transform.forward * (_carLength / 2f + _carSafeDistance), 0.05f);
 
-		Gizmos.DrawSphere(transform.position + transform.right * (_carWidth / 2), 0.1f);
-		Gizmos.DrawSphere(transform.position - transform.right * (_carWidth / 2), 0.1f);
+		Gizmos.DrawSphere(transform.position + transform.right * (_carWidth / 2), 0.05f);
+		Gizmos.DrawSphere(transform.position - transform.right * (_carWidth / 2), 0.05f);
 
 		if (!Application.isPlaying) return;
 		if (_currentRoad == null) return;
 
 		Gizmos.color = Color.red;
-		Gizmos.DrawSphere(_currentRoad.transform.position + _currentRoad.transform.forward * (_currentRoad.size.z / 2) * _currentRoad.transform.localScale.z, 0.1f);
+		Gizmos.DrawSphere(_currentRoad.transform.position + _currentRoad.transform.forward * (_currentRoad.size.z / 2) * _currentRoad.transform.localScale.z, 0.05f);
 
 
 	}

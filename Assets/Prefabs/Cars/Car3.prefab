@@ -80,6 +80,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Car3
       objectReference: {fileID: 0}
+    - target: {fileID: 320286081759367274, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
+      propertyPath: _carWidth
+      value: 0.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 320286081759367274, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
+      propertyPath: _carLength
+      value: 2.38
+      objectReference: {fileID: 0}
+    - target: {fileID: 320286081759367274, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
+      propertyPath: _carSafeDistance
+      value: 0.2
+      objectReference: {fileID: 0}
     - target: {fileID: 320286081759367277, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: m_RootOrder
       value: 0

@@ -82,11 +82,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 320286081759367274, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: _carWidth
-      value: 0.59
+      value: 0.89
       objectReference: {fileID: 0}
     - target: {fileID: 320286081759367274, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: _carLength
-      value: 2.43
+      value: 2.71
       objectReference: {fileID: 0}
     - target: {fileID: 320286081759367277, guid: 9e171380079d6db4a986f1a91c1f6660, type: 3}
       propertyPath: m_RootOrder
