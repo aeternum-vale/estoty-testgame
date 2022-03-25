@@ -290,7 +290,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1176642354229637711, guid: e4f6a4d2cc010ed4e93a530508f68417, type: 3}
       propertyPath: m_Name
-      value: BackKickParticles (1)
+      value: BackKickParticles
       objectReference: {fileID: 0}
     - target: {fileID: 1964040163967864968, guid: e4f6a4d2cc010ed4e93a530508f68417, type: 3}
       propertyPath: m_RootOrder
