@@ -1,10 +1,8 @@
 using System;
-using DG.Tweening;
-using Gamelogic.Extensions;
 using NaughtyAttributes;
 using UnityEngine;
 
-public class Car : MonoBehaviour
+public class Car : PunchableObject
 {
 	enum ECarState { StandingStill, MovingForward, MovingBackward, Leaving }
 
@@ -15,9 +13,6 @@ public class Car : MonoBehaviour
 	[SerializeField] private float _carWidth;
 	[SerializeField] private float _carSafeDistance = 0.1f;
 
-	[SerializeField] private float _punchForce;
-	private Tween _punchTween;
-
 
 	private ECarState _state = ECarState.StandingStill;
 	private ECarState State => _state;
@@ -25,6 +20,8 @@ public class Car : MonoBehaviour
 	private BoxCollider _currentRoad;
 
 	public event EventHandler ReachedExit;
+
+	private bool IsMovingForward => _state == ECarState.MovingForward;
 
 
 	[Button]
@@ -56,24 +53,15 @@ public class Car : MonoBehaviour
 		int layerMask = 1 << GameManager.CarLayer;
 		RaycastHit hit;
 		if (Physics.Raycast(transform.position, (forward ? 1 : -1) * transform.forward, out hit, _carLength / 2f + _carSafeDistance, layerMask))
-		{
-			if (hit.transform.gameObject != gameObject)
-				return false;
-		}
+			return false;
 
 		if (Physics.Raycast(transform.position + transform.right * (_carWidth / 2),
 			(forward ? 1 : -1) * transform.forward, out hit, _carLength / 2f + _carSafeDistance, layerMask))
-		{
-			if (hit.transform.gameObject != gameObject)
-				return false;
-		}
+			return false;
 
 		if (Physics.Raycast(transform.position - transform.right * (_carWidth / 2),
 			(forward ? 1 : -1) * transform.forward, out hit, _carLength / 2f + _carSafeDistance, layerMask))
-		{
-			if (hit.transform.gameObject != gameObject)
-				return false;
-		}
+			return false;
 
 		return true;
 	}
@@ -116,8 +104,7 @@ public class Car : MonoBehaviour
 
 	private void MovingUpdate()
 	{
-		bool isForward = _state == ECarState.MovingForward;
-		int dir = isForward ? 1 : -1;
+		int dir = IsMovingForward ? 1 : -1;
 
 		transform.position += transform.forward * dir * _speed * Time.deltaTime;
 	}
@@ -147,6 +134,7 @@ public class Car : MonoBehaviour
 
 		switch (other.gameObject.layer)
 		{
+
 			case GameManager.RoadLayer:
 				if (_state == ECarState.Leaving)
 					_currentRoad = (BoxCollider)other;
@@ -157,23 +145,29 @@ public class Car : MonoBehaviour
 					SetState(ECarState.Leaving);
 				}
 				break;
+
 			case GameManager.CarLayer:
 				var otherCar = other.gameObject.GetComponent<Car>();
 
-				bool isForward = _state == ECarState.MovingForward;
-				int dir = isForward ? -1 : 1;
-
 				if (otherCar.State == ECarState.StandingStill)
-					otherCar.Punch(transform.forward * dir);
+					otherCar.Punch(transform.forward * (IsMovingForward ? -1 : 1));
 
 				if (otherCar.State == ECarState.Leaving) break;
 
 				SetState(ECarState.StandingStill);
 				break;
+
+			case GameManager.ObstacleLayer:
+				var obstacle = other.gameObject.GetComponent<PunchableObject>();
+				obstacle.Punch(transform.forward * (IsMovingForward ? -1 : 1));
+				SetState(ECarState.StandingStill);
+				break;
+
 			case GameManager.ExitLayer:
 				ReachedExit?.Invoke(this, EventArgs.Empty);
 				gameObject.SetActive(false);
 				break;
+
 		}
 
 	}
@@ -191,24 +185,6 @@ public class Car : MonoBehaviour
 			}
 		}
 	}
-
-	[Button]
-	public void DebugPunch()
-	{
-		Punch(Vector3.forward);
-	}
-
-	public void Punch(Vector3 direction)
-	{
-		_punchTween.Kill();
-		transform.localEulerAngles = new Vector3(0, transform.localEulerAngles.y, 0);
-		direction = new Vector3(-direction.z, direction.z, direction.x);
-
-		var localDirection = transform.InverseTransformDirection(direction);
-
-		_punchTween = transform.DOPunchRotation(localDirection.WithY(0) * _punchForce, 1f, 4);
-	}
-
 
 
 	private void OnCollisionEnter(Collision other)

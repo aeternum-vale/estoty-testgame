@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour
 	public const int CarLayer = 6;
 	public const int RoadLayer = 7;
 	public const int ExitLayer = 8;
+	public const int ObstacleLayer = 9;
 
 
 	[SerializeField] private Transform _carsContainer;
