@@ -13,6 +13,11 @@ public class Car : PunchableObject
 	[SerializeField] private float _carWidth;
 	[SerializeField] private float _carSafeDistance = 0.1f;
 
+	[SerializeField] private ParticleSystem _frontKickParticles;
+	[SerializeField] private ParticleSystem _backKickParticles;
+
+	[SerializeField] private AudioSource _kickAudioSource;
+
 
 	private ECarState _state = ECarState.StandingStill;
 	private ECarState State => _state;
@@ -22,6 +27,7 @@ public class Car : PunchableObject
 	public event EventHandler ReachedExit;
 
 	private bool IsMovingForward => _state == ECarState.MovingForward;
+	private bool IsMoving => (_state == ECarState.MovingForward || _state == ECarState.MovingBackward);
 
 
 	[Button]
@@ -50,7 +56,8 @@ public class Car : PunchableObject
 
 	private bool CanMove(bool forward)
 	{
-		int layerMask = 1 << GameManager.CarLayer;
+		int layerMask = (1 << GameManager.CarLayer) | (1 << GameManager.ObstacleLayer);
+
 		RaycastHit hit;
 		if (Physics.Raycast(transform.position, (forward ? 1 : -1) * transform.forward, out hit, _carLength / 2f + _carSafeDistance, layerMask))
 			return false;
@@ -132,20 +139,31 @@ public class Car : PunchableObject
 
 		if (_state == ECarState.StandingStill) return;
 
+		if (_state == ECarState.Leaving)
+		{
+			switch (other.gameObject.layer)
+			{
+				case GameManager.RoadLayer:
+					_currentRoad = (BoxCollider)other;
+					break;
+				case GameManager.ExitLayer:
+					ReachedExit?.Invoke(this, EventArgs.Empty);
+					gameObject.SetActive(false);
+
+					break;
+			}
+			return;
+		}
+
 		switch (other.gameObject.layer)
 		{
-
 			case GameManager.RoadLayer:
-				if (_state == ECarState.Leaving)
-					_currentRoad = (BoxCollider)other;
-
 				if (_state == ECarState.MovingForward)
 				{
 					_currentRoad = (BoxCollider)other;
 					SetState(ECarState.Leaving);
 				}
 				break;
-
 			case GameManager.CarLayer:
 				var otherCar = other.gameObject.GetComponent<Car>();
 
@@ -154,20 +172,14 @@ public class Car : PunchableObject
 
 				if (otherCar.State == ECarState.Leaving) break;
 
-				SetState(ECarState.StandingStill);
+				Kick();
 				break;
 
 			case GameManager.ObstacleLayer:
 				var obstacle = other.gameObject.GetComponent<PunchableObject>();
 				obstacle.Punch(transform.forward * (IsMovingForward ? -1 : 1));
-				SetState(ECarState.StandingStill);
+				Kick();
 				break;
-
-			case GameManager.ExitLayer:
-				ReachedExit?.Invoke(this, EventArgs.Empty);
-				gameObject.SetActive(false);
-				break;
-
 		}
 
 	}
@@ -184,6 +196,23 @@ public class Car : PunchableObject
 				SetState(ECarState.Leaving);
 			}
 		}
+	}
+
+	private void Kick()
+	{
+		if (IsMovingForward)
+			_frontKickParticles.Play();
+		else
+			_backKickParticles.Play();
+
+		PlayKickSound();
+
+		SetState(ECarState.StandingStill);
+	}
+
+	private void PlayKickSound()
+	{
+		_kickAudioSource.Play();
 	}
 
 
